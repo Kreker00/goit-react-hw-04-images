@@ -7,31 +7,25 @@ import { Loader } from './Loader/Loader';
 import { MyModal } from './Modal/Modal';
 import toast, { Toaster } from 'react-hot-toast';
 import { GlobalStyle } from './GlobalStyle';
-import { nanoid } from 'nanoid';
+
+const per_page = 12;
 
 export const App = () => {
   const [dataImages, setDataImages] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [per_page] = useState(12);
-  const [largeImageURL, setLargeImageURL] = useState('');
-  const [tagImageAlt, setTagImageAlt] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
   const [availablePages, setAvailablePages] = useState(0);
-  const [lastQueryId, setLastQueryId] = useState('');
-  const [currentQueryId, setCurrentQueryId] = useState('');
 
   useEffect(() => {
+    if (searchQuery.trim() === '') return;
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-
-        if (searchQuery.trim() === '' || lastQueryId === currentQueryId) {
-          return;
-        }
 
         const initialImages = await fetchImages(searchQuery, page);
         const { hits, totalHits } = initialImages;
@@ -52,23 +46,16 @@ export const App = () => {
         setIsLoading(false);
       }
     };
-    const cleanup = () => {
-      setIsLoading(false);
-    };
 
-    if (searchQuery.trim() !== '') {
-      fetchData();
-    }
+    fetchData();
 
-    return cleanup;
-  }, [searchQuery, page, per_page, lastQueryId, currentQueryId]);
+    return;
+  }, [searchQuery, page]);
 
   const handleFormSubmit = newQuery => {
     setSearchQuery(newQuery);
     setPage(1);
     setDataImages([]);
-    setLastQueryId(currentQueryId);
-    setCurrentQueryId(nanoid());
   };
 
   const handleLoadMore = () => {
@@ -77,15 +64,11 @@ export const App = () => {
 
   const handleOpenModal = image => {
     const { largeImageURL, tags } = image;
-    setShowModal(true);
-    setLargeImageURL(largeImageURL);
-    setTagImageAlt(tags);
+    setModalData({ largeImageURL, tagImageAlt: tags });
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
-    setLargeImageURL('');
-    setTagImageAlt('');
+    setModalData(null);
   };
 
   return (
@@ -104,9 +87,9 @@ export const App = () => {
         <LoadMoreBtn onLoadMore={handleLoadMore} />
       )}
 
-      {showModal && (
+      {modalData && (
         <MyModal onCloseModal={handleCloseModal}>
-          <img src={largeImageURL} alt={tagImageAlt} />
+          <img src={modalData.largeImageURL} alt={modalData.tagImageAlt} />
         </MyModal>
       )}
 
